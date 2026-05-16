@@ -1,0 +1,19 @@
+services:
+  meka:
+    container_name: meka
+    image: meka:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      # Comma-separated list of private ICS calendar URLs (main calendar views)
+      CALENDAR_ICS_URLS: ${CALENDAR_ICS_URLS:-}
+      # Single ICS URL for the "Coming up" celebrations panel
+      CELEBRATIONS_ICS_URL: ${CELEBRATIONS_ICS_URL:-}
+      TZ: ${TZ:-America/Los_Angeles}
+    volumes:
+      # Persist /admin settings (data/config.json) across container restarts
+      - ./data:/app/data
