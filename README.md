@@ -23,58 +23,55 @@ Open <http://localhost:3000>.
 
 ### Environment
 
-Add private ICS URLs as a comma-separated list:
+Two calendar inputs, both ICS URLs:
 
 ```
+# Comma-separated list — these populate the main calendar (grid + timeline)
 CALENDAR_ICS_URLS=https://cal.example.com/secret1.ics,https://cal.example.com/secret2.ics
+
+# Optional single URL — events from this calendar appear in the "Coming up"
+# panel (birthdays, anniversaries, etc) and are excluded from the main views.
+CELEBRATIONS_ICS_URL=https://cal.example.com/birthdays.ics
 ```
 
 Google Calendar private addresses (`...basic.ics`) work directly — auth lives in the URL.
 
 ### Admin
 
-Visit `/admin` (gear icon in the header) to:
-
-1. Pick which calendar feeds the **Coming up** panel — those events are then excluded from the main views.
-2. Add **categories**: name + substring + color. Events matching the substring use that category's color.
+Visit `/admin` (gear icon in the header) to manage **categories**: name + substring + color. Events whose title contains the substring (case-insensitive) use that category's color. First match wins.
 
 Settings persist to `data/config.json` (gitignored).
 
-## Stack
 
-- **Next.js 16** (App Router, Turbopack, Server Actions)
-- **React 19**
-- **TypeScript**
-- **Tailwind CSS v4** for the reset; design CSS lives in `app/globals.css`
-- **node-ical** for server-side ICS fetching (must be in `serverExternalPackages` — see `next.config.ts`)
-- **Heroicons** for all icons
-- **Inter** + **Roboto Mono** via `next/font/google`
+### Run locally
 
-## Project layout
+```bash
+docker compose up -d --build
+```
+
+App is at <http://localhost:3000>. TZ defaults to `America/Los_Angeles`; override with the `TZ` env var.
+
+### Environment
+
+Add a `.env` next to `docker-compose.yml`:
 
 ```
-app/
-  page.tsx                  server component — fetches events, splits celebrations, applies categories
-  layout.tsx                fonts + theme attribute
-  globals.css               all design CSS
-  admin/
-    page.tsx                settings UI
-    actions.ts              "use server" actions (saveCelebrationsCalendar, addCategory, deleteCategory)
-  components/
-    CalendarApp.tsx         shell with view toggle and theme
-    TwoWeekView.tsx         2-week grid
-    ScrollView.tsx          30-day timeline
-    CelebrationsPanel.tsx   right-hand "Coming up" list
-  lib/
-    calendar.ts             fetchEvents() — reads CALENDAR_ICS_URLS, parses ICS, normalizes all-day DTEND
-    config.ts               read/write data/config.json + matchCategory()
-    colors.ts               hue palette + oklch color derivation
-    dateHelpers.ts          isSameDay, addDays, fmtTime, etc.
-    layoutHelpers.ts        multi-day span lane packing
-    types.ts                EventData / ParsedEvent
-data/
-  config.json               runtime settings (gitignored)
+CALENDAR_ICS_URLS=https://cal.example.com/secret1.ics,https://cal.example.com/secret2.ics
+CELEBRATIONS_ICS_URL=https://cal.example.com/birthdays.ics
+TZ=America/Los_Angeles
 ```
+
+### Persistence
+
+Category settings managed from `/admin` are stored at `/app/data/config.json` inside the container. The compose file maps `./data` on the host to that path so changes survive restarts and rebuilds. Back up that directory if you care about your settings.
+
+### Updates
+
+```bash
+git pull
+docker compose up -d --build
+```
+
 
 ## Notes
 

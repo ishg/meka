@@ -7,6 +7,12 @@ export type CalendarEvent = {
   end: Date | null;
   allDay: boolean;
   calendarIndex: number;
+  isCelebration: boolean;
+};
+
+export type FetchResult = {
+  main: CalendarEvent[];
+  celebrations: CalendarEvent[];
 };
 
 function resolveString(value: ical.ParameterValue): string {
@@ -15,30 +21,42 @@ function resolveString(value: ical.ParameterValue): string {
   return String(value);
 }
 
-export async function fetchEvents(): Promise<CalendarEvent[]> {
-  const raw = process.env.CALENDAR_ICS_URLS ?? '';
-  const urls = raw
+function parseUrls(raw: string | undefined): string[] {
+  return (raw ?? '')
     .split(',')
     .map((u) => u.trim())
     .filter(Boolean);
-
-  if (urls.length === 0) return [];
-
-  const results = await Promise.allSettled(
-    urls.map((url, index) => fetchCalendar(url, index))
-  );
-
-  const events: CalendarEvent[] = [];
-  for (const result of results) {
-    if (result.status === 'fulfilled') events.push(...result.value);
-    else console.error('Failed to fetch calendar:', result.reason);
-  }
-
-  events.sort((a, b) => a.start.getTime() - b.start.getTime());
-  return events;
 }
 
-async function fetchCalendar(url: string, calendarIndex: number): Promise<CalendarEvent[]> {
+export async function fetchEvents(): Promise<FetchResult> {
+  const mainUrls = parseUrls(process.env.CALENDAR_ICS_URLS);
+  const celebrationsUrl = (process.env.CELEBRATIONS_ICS_URL ?? '').trim();
+
+  const tasks: Promise<CalendarEvent[]>[] = [];
+
+  mainUrls.forEach((url, i) => tasks.push(fetchCalendar(url, i, false)));
+  if (celebrationsUrl) tasks.push(fetchCalendar(celebrationsUrl, mainUrls.length, true));
+
+  const results = await Promise.allSettled(tasks);
+
+  const main: CalendarEvent[] = [];
+  const celebrations: CalendarEvent[] = [];
+  for (const result of results) {
+    if (result.status !== 'fulfilled') {
+      console.error('Failed to fetch calendar:', result.reason);
+      continue;
+    }
+    for (const evt of result.value) {
+      (evt.isCelebration ? celebrations : main).push(evt);
+    }
+  }
+
+  main.sort((a, b) => a.start.getTime() - b.start.getTime());
+  celebrations.sort((a, b) => a.start.getTime() - b.start.getTime());
+  return { main, celebrations };
+}
+
+async function fetchCalendar(url: string, calendarIndex: number, isCelebration: boolean): Promise<CalendarEvent[]> {
   const data = await ical.async.fromURL(url);
   const events: CalendarEvent[] = [];
 
@@ -58,6 +76,7 @@ async function fetchCalendar(url: string, calendarIndex: number): Promise<Calend
       end,
       allDay,
       calendarIndex,
+      isCelebration,
     });
   }
 

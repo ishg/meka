@@ -6,17 +6,11 @@ import type { EventData } from '@/app/lib/types';
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
-  const [events, cfg] = await Promise.all([fetchEvents(), readConfig()]);
+  const [{ main, celebrations }, cfg] = await Promise.all([fetchEvents(), readConfig()]);
 
   const todayMs = Date.now();
 
-  // Split events: celebrations calendar feeds the right panel,
-  // everything else feeds the main calendar.
-  const celebrationsIdx = cfg.celebrationsCalendarIndex;
-  const isCelebration = (e: typeof events[number]) =>
-    celebrationsIdx !== null && e.calendarIndex === celebrationsIdx;
-
-  const decorate = (e: typeof events[number]): EventData => {
+  const decorate = (e: (typeof main)[number]): EventData => {
     const cat = matchCategory(e.summary, cfg.categories);
     return {
       id: e.id,
@@ -30,9 +24,8 @@ export default async function Page() {
     };
   };
 
-  const mainEvents: EventData[] = events.filter((e) => !isCelebration(e)).map(decorate);
-  const celebrationEvents: EventData[] = events
-    .filter(isCelebration)
+  const mainEvents: EventData[] = main.map(decorate);
+  const celebrationEvents: EventData[] = celebrations
     .filter((e) => {
       const endMs = e.end?.getTime() ?? e.start.getTime();
       return endMs >= todayMs - 86400000; // include today and future

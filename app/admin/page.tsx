@@ -2,55 +2,24 @@ import Link from 'next/link';
 import { ArrowLeftIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { readConfig } from '@/app/lib/config';
 import { PALETTE, colorsForHue } from '@/app/lib/colors';
-import { saveCelebrationsCalendar, addCategory, deleteCategory } from './actions';
+import { addCategory, deleteCategory } from './actions';
 
 export const dynamic = 'force-dynamic';
 
-function calendarUrls(): string[] {
-  const raw = process.env.CALENDAR_ICS_URLS ?? '';
-  return raw.split(',').map((u) => u.trim()).filter(Boolean);
-}
-
-function calendarLabel(url: string, index: number): string {
-  try {
-    const u = new URL(url);
-    return `${index}: ${u.hostname}${u.pathname.split('/').slice(-1)[0] || ''}`;
-  } catch {
-    return `${index}: calendar`;
-  }
-}
-
 export default async function AdminPage() {
   const cfg = await readConfig();
-  const urls = calendarUrls();
 
   return (
     <div className="admin">
       <div className="admin-hd">
         <div>
           <h1>Settings</h1>
-          <div className="sub">Configure celebrations and event categories</div>
+          <div className="sub">Configure event categories</div>
         </div>
         <Link href="/" className="link-btn">
           <ArrowLeftIcon className="ico" /> Back to calendar
         </Link>
       </div>
-
-      <section className="admin-section">
-        <h2>Celebrations calendar</h2>
-        <p className="muted">
-          Events in this calendar appear in the &ldquo;Coming up&rdquo; panel instead of the main calendar view.
-        </p>
-        <form action={saveCelebrationsCalendar} className="row">
-          <select name="calendarIndex" defaultValue={cfg.celebrationsCalendarIndex ?? ''} className="select">
-            <option value="">— None —</option>
-            {urls.map((url, i) => (
-              <option key={i} value={i}>{calendarLabel(url, i)}</option>
-            ))}
-          </select>
-          <button type="submit" className="btn primary">Save</button>
-        </form>
-      </section>
 
       <section className="admin-section">
         <h2>Categories</h2>

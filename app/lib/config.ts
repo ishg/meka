@@ -9,14 +9,12 @@ export type Category = {
 };
 
 export type AppConfig = {
-  celebrationsCalendarIndex: number | null;
   categories: Category[];
 };
 
 const CONFIG_PATH = path.join(process.cwd(), 'data', 'config.json');
 
 const DEFAULT_CONFIG: AppConfig = {
-  celebrationsCalendarIndex: null,
   categories: [],
 };
 
@@ -25,8 +23,6 @@ export async function readConfig(): Promise<AppConfig> {
     const buf = await fs.readFile(CONFIG_PATH, 'utf-8');
     const parsed = JSON.parse(buf) as Partial<AppConfig>;
     return {
-      celebrationsCalendarIndex:
-        typeof parsed.celebrationsCalendarIndex === 'number' ? parsed.celebrationsCalendarIndex : null,
       categories: Array.isArray(parsed.categories) ? parsed.categories : [],
     };
   } catch (err) {

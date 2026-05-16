@@ -1,20 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { readConfig, writeConfig, type AppConfig, type Category } from '@/app/lib/config';
+import { readConfig, writeConfig, type Category } from '@/app/lib/config';
 
 function genId(): string {
   return Math.random().toString(36).slice(2, 10);
-}
-
-export async function saveCelebrationsCalendar(formData: FormData): Promise<void> {
-  const raw = formData.get('calendarIndex');
-  const idx = raw === null || raw === '' ? null : Number(raw);
-  const cfg = await readConfig();
-  const next: AppConfig = { ...cfg, celebrationsCalendarIndex: Number.isFinite(idx) ? (idx as number) : null };
-  await writeConfig(next);
-  revalidatePath('/');
-  revalidatePath('/admin');
 }
 
 export async function addCategory(formData: FormData): Promise<void> {
