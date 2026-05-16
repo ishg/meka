@@ -15,7 +15,7 @@ A kitchen calendar dashboard built for a 10" tablet on the counter. Reads one or
 
 ```bash
 npm install
-cp .env.local.example .env.local   # then edit
+cp .env.example .env   # then edit
 npm run dev
 ```
 
@@ -23,7 +23,7 @@ Open <http://localhost:3000>.
 
 ### Environment
 
-Two calendar inputs, both ICS URLs:
+A single `.env` file at the repo root works for both `npm run dev` and `docker compose`:
 
 ```
 # Comma-separated list — these populate the main calendar (grid + timeline)
@@ -32,9 +32,12 @@ CALENDAR_ICS_URLS=https://cal.example.com/secret1.ics,https://cal.example.com/se
 # Optional single URL — events from this calendar appear in the "Coming up"
 # panel (birthdays, anniversaries, etc) and are excluded from the main views.
 CELEBRATIONS_ICS_URL=https://cal.example.com/birthdays.ics
+
+# Timezone (used by the container, optional for dev)
+TZ=America/Los_Angeles
 ```
 
-Google Calendar private addresses (`...basic.ics`) work directly — auth lives in the URL.
+Google Calendar private addresses (`...basic.ics`) work directly — auth lives in the URL. `.env` is git-ignored.
 
 ### Admin
 
@@ -49,17 +52,7 @@ Settings persist to `data/config.json` (gitignored).
 docker compose up -d --build
 ```
 
-App is at <http://localhost:3000>. TZ defaults to `America/Los_Angeles`; override with the `TZ` env var.
-
-### Environment
-
-Add a `.env` next to `docker-compose.yml`:
-
-```
-CALENDAR_ICS_URLS=https://cal.example.com/secret1.ics,https://cal.example.com/secret2.ics
-CELEBRATIONS_ICS_URL=https://cal.example.com/birthdays.ics
-TZ=America/Los_Angeles
-```
+App is at <http://localhost:3000>. Compose reads `.env` next to `docker-compose.yml` for the same variables documented in [Environment](#environment) above. TZ defaults to `America/Los_Angeles` when unset.
 
 ### Persistence
 

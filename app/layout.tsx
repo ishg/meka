@@ -15,8 +15,8 @@ const robotoMono = Roboto_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Kitchen Calendar",
-  description: "Unified calendar view",
+  title: "Meka",
+  description: "Home calendar view",
 };
 
 export default function RootLayout({
