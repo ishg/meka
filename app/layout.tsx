@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
+import Script from "next/script";
+import { THEME_INIT_SCRIPT } from "@/app/lib/theme";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,7 +30,12 @@ export default function RootLayout({
       data-theme="light"
       className={`${inter.variable} ${robotoMono.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <Script id="theme-init" strategy="beforeInteractive">
+          {THEME_INIT_SCRIPT}
+        </Script>
+        {children}
+      </body>
     </html>
   );
 }
