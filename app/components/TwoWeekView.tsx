@@ -1,10 +1,13 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { addDays, isSameDay, fmtTime } from '@/app/lib/dateHelpers';
 import { layoutSpans, type Span } from '@/app/lib/layoutHelpers';
 import { colorsForHue, DEFAULT_EVENT_HUE, DEFAULT_SPAN_HUE } from '@/app/lib/colors';
 import type { ParsedEvent } from '@/app/lib/types';
+
+const MOBILE_DAY_W = 128;
 
 function evtStyle(hue: number | null, dark: boolean) {
   const c = colorsForHue(hue ?? DEFAULT_EVENT_HUE, dark);
@@ -29,6 +32,12 @@ const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov
 type Props = { events: ParsedEvent[]; today: Date; dark: boolean };
 
 export default function TwoWeekView({ events, today, dark }: Props) {
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  const scrollByDay = (dir: 1 | -1) => {
+    wrapRef.current?.scrollBy({ left: dir * MOBILE_DAY_W, behavior: 'smooth' });
+  };
+
   const days = useMemo(() =>
     Array.from({ length: 14 }, (_, i) => addDays(today, i)), [today]);
 
@@ -56,7 +65,14 @@ export default function TwoWeekView({ events, today, dark }: Props) {
   const weekStarts = [days[0], days[7]];
 
   return (
-    <div className="cal-wrap" data-density="regular">
+    <div className="cal-wrap" data-density="regular" ref={wrapRef}>
+      <button className="nav-btn nav-btn-l" onClick={() => scrollByDay(-1)} aria-label="Scroll earlier">
+        <ChevronLeftIcon className="ico" />
+      </button>
+      <button className="nav-btn nav-btn-r" onClick={() => scrollByDay(1)} aria-label="Scroll later">
+        <ChevronRightIcon className="ico" />
+      </button>
+
       {/* Day-of-week header */}
       <div className="dow-row">
         {Array.from({ length: 7 }, (_, i) => {

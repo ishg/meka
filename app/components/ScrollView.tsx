@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useRef, useEffect, useState } from 'react';
+import { ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { addDays, isSameDay, daysBetween, fmtTimeRange, fmtTime } from '@/app/lib/dateHelpers';
 import type { Span } from '@/app/lib/layoutHelpers';
 import { colorsForHue, DEFAULT_EVENT_HUE, DEFAULT_SPAN_HUE } from '@/app/lib/colors';
@@ -48,6 +49,10 @@ export default function ScrollView({ events, today, dark }: Props) {
   useEffect(() => {
     if (wrapRef.current) wrapRef.current.scrollTop = 6 * PX_PER_HOUR;
   }, []);
+
+  const scrollByDay = (dir: 1 | -1) => {
+    wrapRef.current?.scrollBy({ left: dir * DAY_W, behavior: 'smooth' });
+  };
 
   const days = useMemo(() =>
     Array.from({ length: DAYS }, (_, i) => addDays(today, i)), [today]);
@@ -105,7 +110,14 @@ export default function ScrollView({ events, today, dark }: Props) {
   })();
 
   return (
-    <div className="scroll-wrap" ref={wrapRef}>
+    <div className="sv-outer">
+      <button className="nav-btn nav-btn-l" onClick={() => scrollByDay(-1)} aria-label="Scroll earlier">
+        <ChevronLeftIcon className="ico" />
+      </button>
+      <button className="nav-btn nav-btn-r" onClick={() => scrollByDay(1)} aria-label="Scroll later">
+        <ChevronRightIcon className="ico" />
+      </button>
+      <div className="scroll-wrap" ref={wrapRef}>
       <div className="sv-inner" style={{ width: HR_W + daysW }}>
 
         {/* Left gutter — sticky left */}
@@ -225,6 +237,7 @@ export default function ScrollView({ events, today, dark }: Props) {
             })}
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

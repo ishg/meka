@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowLeftIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { readConfig } from '@/app/lib/config';
 import { PALETTE, colorsForHue } from '@/app/lib/colors';
+import ThemeToggle from '@/app/components/ThemeToggle';
 import { addCategory, deleteCategory } from './actions';
 
 export const dynamic = 'force-dynamic';
@@ -20,6 +21,12 @@ export default async function AdminPage() {
           <ArrowLeftIcon className="ico" /> Back to calendar
         </Link>
       </div>
+
+      <section className="admin-section">
+        <h2>Appearance</h2>
+        <p className="muted">Choose how Meka looks. Saved on this device.</p>
+        <ThemeToggle />
+      </section>
 
       <section className="admin-section">
         <h2>Categories</h2>
