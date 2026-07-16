@@ -10,12 +10,14 @@ export type Category = {
 
 export type AppConfig = {
   categories: Category[];
+  transitLines: string[]; // BART bartLineId() values to show; empty shows everything
 };
 
 const CONFIG_PATH = path.join(process.cwd(), 'data', 'config.json');
 
 const DEFAULT_CONFIG: AppConfig = {
   categories: [],
+  transitLines: [],
 };
 
 export async function readConfig(): Promise<AppConfig> {
@@ -24,6 +26,7 @@ export async function readConfig(): Promise<AppConfig> {
     const parsed = JSON.parse(buf) as Partial<AppConfig>;
     return {
       categories: Array.isArray(parsed.categories) ? parsed.categories : [],
+      transitLines: Array.isArray(parsed.transitLines) ? parsed.transitLines : [],
     };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return DEFAULT_CONFIG;

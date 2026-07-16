@@ -28,3 +28,11 @@ export async function deleteCategory(formData: FormData): Promise<void> {
   revalidatePath('/');
   revalidatePath('/admin');
 }
+
+export async function updateTransitLines(formData: FormData): Promise<void> {
+  const transitLines = formData.getAll('lines').map(String);
+  const cfg = await readConfig();
+  await writeConfig({ ...cfg, transitLines });
+  revalidatePath('/');
+  revalidatePath('/admin');
+}

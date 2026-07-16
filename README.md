@@ -8,6 +8,7 @@ A kitchen calendar dashboard built for a 10" tablet on the counter. Reads one or
 - **Timeline view** — 30-day horizontal scrollable timeline with a live "now" line.
 - **Coming up** panel — celebrations from a designated calendar, grouped into This week / Next week / Later, with red urgency for anything in the next 10 days.
 - **Categories** — assign colors to events whose title contains a substring (case-insensitive). First match wins.
+- **BART departures** — live northbound/southbound trains from 12th St. Oakland City Center, refreshed every 30s.
 - **Light / dark theme** toggle.
 - **No build step required** for config — the admin page writes a JSON file on the server.
 
@@ -35,6 +36,10 @@ CELEBRATIONS_ICS_URL=https://cal.example.com/birthdays.ics
 
 # Timezone (used by the container, optional for dev)
 TZ=America/Los_Angeles
+
+# Optional: BART API key for the transit panel (12th St. Oakland City Center
+# departures). Falls back to BART's public demo key if unset.
+BART_API_KEY=
 ```
 
 Google Calendar private addresses (`...basic.ics`) work directly — auth lives in the URL. `.env` is git-ignored.

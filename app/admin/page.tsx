@@ -2,13 +2,24 @@ import Link from 'next/link';
 import { ArrowLeftIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { readConfig } from '@/app/lib/config';
 import { PALETTE, colorsForHue } from '@/app/lib/colors';
+import { fetchBartLineOptions, type BartLineOption } from '@/app/lib/bart';
 import ThemeToggle from '@/app/components/ThemeToggle';
-import { addCategory, deleteCategory } from './actions';
+import { addCategory, deleteCategory, updateTransitLines } from './actions';
 
 export const dynamic = 'force-dynamic';
 
+function titleCase(s: string): string {
+  return s.length ? s[0] + s.slice(1).toLowerCase() : s;
+}
+
 export default async function AdminPage() {
-  const cfg = await readConfig();
+  const [cfg, lineOptions] = await Promise.all([
+    readConfig(),
+    fetchBartLineOptions().catch(() => null as BartLineOption[] | null),
+  ]);
+
+  const northLines = lineOptions?.filter((l) => l.direction === 'North') ?? [];
+  const southLines = lineOptions?.filter((l) => l.direction === 'South') ?? [];
 
   return (
     <div className="admin">
@@ -84,6 +95,77 @@ export default async function AdminPage() {
             <PlusIcon className="ico" /> Add
           </button>
         </form>
+      </section>
+
+      <section className="admin-section">
+        <span className="section-eyebrow">Transit</span>
+        <h2>BART lines</h2>
+        <p className="muted">
+          Departures for 12th St. Oakland City Center.{' '}
+          {cfg.transitLines.length === 0
+            ? 'Showing every live departure until you select specific lines below.'
+            : 'Only the checked lines below show on the dashboard.'}
+        </p>
+
+        {lineOptions === null ? (
+          <p className="muted small">Couldn&rsquo;t load live BART lines right now. Try again later.</p>
+        ) : (
+          <form action={updateTransitLines} className="transit-form">
+            <div className="transit-cols">
+              <div className="transit-col">
+                <span className="section-eyebrow">Northbound</span>
+                {northLines.length === 0 ? (
+                  <p className="muted small">No northbound trains right now.</p>
+                ) : (
+                  <ul className="line-list">
+                    {northLines.map((l) => (
+                      <li key={l.id} className="line-item">
+                        <label>
+                          <input
+                            type="checkbox"
+                            name="lines"
+                            value={l.id}
+                            defaultChecked={cfg.transitLines.includes(l.id)}
+                          />
+                          <span className="line-dot" style={{ background: l.hexColor }} />
+                          <span className="line-name">{l.destination}</span>
+                          <span className="line-tag">{titleCase(l.line)}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+
+              <div className="transit-col">
+                <span className="section-eyebrow">Southbound</span>
+                {southLines.length === 0 ? (
+                  <p className="muted small">No southbound trains right now.</p>
+                ) : (
+                  <ul className="line-list">
+                    {southLines.map((l) => (
+                      <li key={l.id} className="line-item">
+                        <label>
+                          <input
+                            type="checkbox"
+                            name="lines"
+                            value={l.id}
+                            defaultChecked={cfg.transitLines.includes(l.id)}
+                          />
+                          <span className="line-dot" style={{ background: l.hexColor }} />
+                          <span className="line-name">{l.destination}</span>
+                          <span className="line-tag">{titleCase(l.line)}</span>
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </div>
+
+            <button type="submit" className="btn primary">Save</button>
+          </form>
+        )}
       </section>
     </div>
   );
