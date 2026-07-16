@@ -18,6 +18,7 @@ import WeatherPanel from './WeatherPanel';
 import TransitPanel from './TransitPanel';
 import TopBar from './TopBar';
 import type { EventData, ParsedEvent } from '@/app/lib/types';
+import type { WeatherData } from '@/app/lib/weather';
 import { readStoredTheme, applyTheme } from '@/app/lib/theme';
 
 type View = 'grid' | 'scroll' | 'agenda';
@@ -27,9 +28,11 @@ type Props = {
   events: EventData[];
   celebrations: EventData[];
   todayMs: number;
+  weather: WeatherData | null;
+  weatherZip: string;
 };
 
-export default function CalendarApp({ events, celebrations, todayMs }: Props) {
+export default function CalendarApp({ events, celebrations, todayMs, weather, weatherZip }: Props) {
   const [dark, setDark] = useState(false);
   const [view, setView] = useState<View>('grid');
   const [mobileTab, setMobileTab] = useState<MobileTab>('cal');
@@ -68,8 +71,10 @@ export default function CalendarApp({ events, celebrations, todayMs }: Props) {
   return (
     <div className="app" data-mobile-tab={mobileTab}>
       <TopBar />
-      <WeatherPanel />
-      <TransitPanel />
+      <div className="sidebar-col">
+        <WeatherPanel weather={weather} weatherZip={weatherZip} />
+        <TransitPanel />
+      </div>
 
       <div className="pane cal-pane">
         <div className="hd">
