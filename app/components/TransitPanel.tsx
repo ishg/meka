@@ -146,7 +146,12 @@ export default function TransitPanel() {
 
   return (
     <div className="pane transit-pane flex flex-col border-r border-[var(--line)] bg-[var(--bg-sunk)] p-4.5 [grid-area:transit] max-[860px]:border-0 max-[860px]:p-3.5">
-      <h2 className="mb-3 text-[19px] font-semibold tracking-tight max-[860px]:text-xl">BART</h2>
+      <div className="mb-3 flex items-baseline gap-2">
+        <h2 className="text-[19px] font-semibold tracking-tight max-[860px]:text-xl">BART</h2>
+        {departures && (
+          <span className="truncate text-xs text-[var(--ink-3)]">{departures.stationName}</span>
+        )}
+      </div>
 
       {data && !data.configured ? (
         <p className="text-xs text-[var(--ink-3)]">Pick a station in Settings →</p>
@@ -165,13 +170,9 @@ export default function TransitPanel() {
             />
           </div>
 
-          <p className="mt-3.5 text-xs text-[var(--ink-3)]">
-            {error && !departures
-              ? 'Unable to load departures'
-              : departures
-                ? departures.stationName
-                : 'Loading…'}
-          </p>
+          {error && !departures && (
+            <p className="mt-3.5 text-xs text-[var(--ink-3)]">Unable to load departures</p>
+          )}
         </>
       )}
     </div>
