@@ -15,20 +15,21 @@ export default async function AdminPage() {
       <div className="admin-hd">
         <div>
           <h1>Settings</h1>
-          <div className="sub">Configure event categories</div>
+          <div className="sub">General preferences, plus settings for each module</div>
         </div>
         <Link href="/" className="link-btn">
-          <ArrowLeftIcon className="ico" /> Back to calendar
+          <ArrowLeftIcon className="ico" /> Back to home
         </Link>
       </div>
 
       <section className="admin-section">
-        <h2>Appearance</h2>
+        <h2>General</h2>
         <p className="muted">Choose how Meka looks. Saved on this device.</p>
         <ThemeToggle />
       </section>
 
       <section className="admin-section">
+        <span className="section-eyebrow">Calendar</span>
         <h2>Categories</h2>
         <p className="muted">
           Color events whose title contains a given text (case-insensitive). First match wins.
