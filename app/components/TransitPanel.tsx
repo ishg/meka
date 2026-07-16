@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ArrowUpIcon, ArrowDownIcon } from '@heroicons/react/24/outline';
-import type { BartDepartures } from '@/app/lib/bart';
+import type { BartDepartures, BartDeparturesResponse } from '@/app/lib/bart';
 
 const POLL_MS = 60000;
 const VISIBLE_ROWS = 3;
@@ -114,7 +114,7 @@ function DepartureRow({ label, icon, departures }: {
 }
 
 export default function TransitPanel() {
-  const [data, setData] = useState<BartDepartures | null>(null);
+  const [data, setData] = useState<BartDeparturesResponse | null>(null);
   const [error, setError] = useState(false);
 
   useEffect(() => {
@@ -124,7 +124,7 @@ export default function TransitPanel() {
       try {
         const res = await fetch('/api/bart');
         if (!res.ok) throw new Error('bad response');
-        const json = (await res.json()) as BartDepartures;
+        const json = (await res.json()) as BartDeparturesResponse;
         if (!cancelled) {
           setData(json);
           setError(false);
@@ -142,30 +142,38 @@ export default function TransitPanel() {
     };
   }, []);
 
+  const departures = data?.configured ? data : null;
+
   return (
     <div className="pane transit-pane flex flex-col border-r border-[var(--line)] bg-[var(--bg-sunk)] p-4.5 [grid-area:transit] max-[860px]:border-0 max-[860px]:p-3.5">
       <h2 className="mb-3 text-[19px] font-semibold tracking-tight max-[860px]:text-xl">BART</h2>
 
-      <div className="flex flex-col gap-3.5">
-        <DepartureRow
-          label="Southbound"
-          icon={<ArrowDownIcon className="h-[15px] w-[15px] text-[var(--ink-3)]" />}
-          departures={data?.south ?? []}
-        />
-        <DepartureRow
-          label="Northbound"
-          icon={<ArrowUpIcon className="h-[15px] w-[15px] text-[var(--ink-3)]" />}
-          departures={data?.north ?? []}
-        />
-      </div>
+      {data && !data.configured ? (
+        <p className="text-xs text-[var(--ink-3)]">Pick a station in Settings →</p>
+      ) : (
+        <>
+          <div className="flex flex-col gap-3.5">
+            <DepartureRow
+              label="Southbound"
+              icon={<ArrowDownIcon className="h-[15px] w-[15px] text-[var(--ink-3)]" />}
+              departures={departures?.south ?? []}
+            />
+            <DepartureRow
+              label="Northbound"
+              icon={<ArrowUpIcon className="h-[15px] w-[15px] text-[var(--ink-3)]" />}
+              departures={departures?.north ?? []}
+            />
+          </div>
 
-      <p className="mt-3.5 text-xs text-[var(--ink-3)]">
-        {error && !data
-          ? 'Unable to load departures'
-          : data
-            ? '12th St. Oakland City Center'
-            : 'Loading…'}
-      </p>
+          <p className="mt-3.5 text-xs text-[var(--ink-3)]">
+            {error && !departures
+              ? 'Unable to load departures'
+              : departures
+                ? departures.stationName
+                : 'Loading…'}
+          </p>
+        </>
+      )}
     </div>
   );
 }

@@ -3,6 +3,11 @@
 
 export type Direction = 'North' | 'South';
 
+export type BartStation = {
+  abbr: string;
+  name: string;
+};
+
 export type BartDeparture = {
   destination: string;
   minutes: number; // 0 when the train is "Leaving"
@@ -18,6 +23,12 @@ export type BartDepartures = {
   south: BartDeparture[];
 };
 
+// What /api/bart returns: either a real departures payload, or a marker that
+// no station has been picked in Settings yet.
+export type BartDeparturesResponse =
+  | ({ configured: true } & BartDepartures)
+  | { configured: false };
+
 // A distinct (line color, destination) pairing a user can pick in Settings.
 export type BartLineOption = {
   id: string;
@@ -27,9 +38,12 @@ export type BartLineOption = {
   hexColor: string;
 };
 
-const STATION = '12TH'; // 12th St. Oakland City Center
 const DEMO_KEY = 'MW9S-E7SL-26DU-VV8V'; // BART's public demo key
 const MAX_PER_DIRECTION = 6;
+
+function apiKey(): string {
+  return process.env.BART_API_KEY || DEMO_KEY;
+}
 
 type RawEstimate = {
   minutes?: string;
@@ -43,28 +57,44 @@ type RawEtd = {
   estimate?: RawEstimate[];
 };
 
+type RawStation = { abbr?: string; name?: string };
+
 export function bartLineId(line: string, destination: string): string {
   return `${line}|${destination}`;
 }
 
-async function fetchRawEtd(): Promise<{ stationName: string; etds: RawEtd[] }> {
-  const key = process.env.BART_API_KEY || DEMO_KEY;
-  const url = `https://api.bart.gov/api/etd.aspx?cmd=etd&orig=${STATION}&key=${key}&json=y`;
+// Every BART station, for the Settings picker.
+export async function fetchBartStations(): Promise<BartStation[]> {
+  const url = `https://api.bart.gov/api/stn.aspx?cmd=stns&key=${apiKey()}&json=y`;
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`BART API responded ${res.status}`);
+  const data = await res.json();
+
+  const stations = data?.root?.stations?.station;
+  const list: RawStation[] = Array.isArray(stations) ? stations : [];
+  return list
+    .map((s) => ({ abbr: String(s.abbr ?? ''), name: String(s.name ?? '') }))
+    .filter((s) => s.abbr)
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+async function fetchRawEtd(station: string): Promise<{ stationName: string; etds: RawEtd[] }> {
+  const url = `https://api.bart.gov/api/etd.aspx?cmd=etd&orig=${station}&key=${apiKey()}&json=y`;
 
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error(`BART API responded ${res.status}`);
   const data = await res.json();
 
-  const station = data?.root?.station?.[0];
+  const stn = data?.root?.station?.[0];
   return {
-    stationName: String(station?.name ?? '12th St. Oakland City Center'),
-    etds: Array.isArray(station?.etd) ? station.etd : [],
+    stationName: String(stn?.name ?? station),
+    etds: Array.isArray(stn?.etd) ? stn.etd : [],
   };
 }
 
 // Every (line, destination) pairing currently being served, for the Settings picker.
-export async function fetchBartLineOptions(): Promise<BartLineOption[]> {
-  const { etds } = await fetchRawEtd();
+export async function fetchBartLineOptions(station: string): Promise<BartLineOption[]> {
+  const { etds } = await fetchRawEtd(station);
   const seen = new Map<string, BartLineOption>();
 
   for (const etd of etds) {
@@ -91,8 +121,8 @@ export async function fetchBartLineOptions(): Promise<BartLineOption[]> {
 }
 
 // selectedLineIds is a set of bartLineId() values from Settings; empty/undefined shows everything.
-export async function fetchBartDepartures(selectedLineIds?: string[]): Promise<BartDepartures> {
-  const { stationName, etds } = await fetchRawEtd();
+export async function fetchBartDepartures(station: string, selectedLineIds?: string[]): Promise<BartDepartures> {
+  const { stationName, etds } = await fetchRawEtd(station);
   const filter = selectedLineIds && selectedLineIds.length > 0 ? new Set(selectedLineIds) : null;
 
   const north: BartDeparture[] = [];

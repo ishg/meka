@@ -29,6 +29,16 @@ export async function deleteCategory(formData: FormData): Promise<void> {
   revalidatePath('/admin');
 }
 
+export async function updateTransitStation(formData: FormData): Promise<void> {
+  const transitStation = String(formData.get('station') ?? '').trim();
+  const cfg = await readConfig();
+  if (transitStation === cfg.transitStation) return;
+  // Line selections are specific to the previous station's live trains — stale otherwise.
+  await writeConfig({ ...cfg, transitStation, transitLines: [] });
+  revalidatePath('/');
+  revalidatePath('/admin');
+}
+
 export async function updateTransitLines(formData: FormData): Promise<void> {
   const transitLines = formData.getAll('lines').map(String);
   const cfg = await readConfig();

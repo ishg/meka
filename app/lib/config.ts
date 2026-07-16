@@ -10,6 +10,7 @@ export type Category = {
 
 export type AppConfig = {
   categories: Category[];
+  transitStation: string; // BART station abbreviation (e.g. "12TH"); empty hides the panel
   transitLines: string[]; // BART bartLineId() values to show; empty shows everything
 };
 
@@ -17,6 +18,7 @@ const CONFIG_PATH = path.join(process.cwd(), 'data', 'config.json');
 
 const DEFAULT_CONFIG: AppConfig = {
   categories: [],
+  transitStation: '',
   transitLines: [],
 };
 
@@ -26,6 +28,7 @@ export async function readConfig(): Promise<AppConfig> {
     const parsed = JSON.parse(buf) as Partial<AppConfig>;
     return {
       categories: Array.isArray(parsed.categories) ? parsed.categories : [],
+      transitStation: typeof parsed.transitStation === 'string' ? parsed.transitStation : '',
       transitLines: Array.isArray(parsed.transitLines) ? parsed.transitLines : [],
     };
   } catch (err) {
