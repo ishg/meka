@@ -2,13 +2,28 @@ import Link from 'next/link';
 import { ArrowLeftIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { readConfig } from '@/app/lib/config';
 import { PALETTE, colorsForHue } from '@/app/lib/colors';
+import { fetchBartStations, fetchBartLineOptions, type BartStation, type BartLineOption } from '@/app/lib/bart';
 import ThemeToggle from '@/app/components/ThemeToggle';
-import { addCategory, deleteCategory } from './actions';
+import { addCategory, deleteCategory, updateTransitStation, updateTransitLines } from './actions';
 
 export const dynamic = 'force-dynamic';
 
+function titleCase(s: string): string {
+  return s.length ? s[0] + s.slice(1).toLowerCase() : s;
+}
+
 export default async function AdminPage() {
-  const cfg = await readConfig();
+  const [cfg, stations] = await Promise.all([
+    readConfig(),
+    fetchBartStations().catch(() => null as BartStation[] | null),
+  ]);
+
+  const lineOptions = cfg.transitStation
+    ? await fetchBartLineOptions(cfg.transitStation).catch(() => null as BartLineOption[] | null)
+    : null;
+
+  const northLines = lineOptions?.filter((l) => l.direction === 'North') ?? [];
+  const southLines = lineOptions?.filter((l) => l.direction === 'South') ?? [];
 
   return (
     <div className="admin">
@@ -85,6 +100,100 @@ export default async function AdminPage() {
           </button>
         </form>
       </section>
+
+      <section className="admin-section">
+        <span className="section-eyebrow">Transit</span>
+        <h2>BART station</h2>
+        <p className="muted">
+          The dashboard shows nothing until a station is picked here.
+        </p>
+
+        {stations === null ? (
+          <p className="muted small">Couldn&rsquo;t load the BART station list right now. Try again later.</p>
+        ) : (
+          <form action={updateTransitStation} className="row">
+            <select name="station" defaultValue={cfg.transitStation} className="select">
+              <option value="">Not selected</option>
+              {stations.map((s) => (
+                <option key={s.abbr} value={s.abbr}>{s.name}</option>
+              ))}
+            </select>
+            <button type="submit" className="btn primary">Save</button>
+          </form>
+        )}
+      </section>
+
+      {cfg.transitStation && (
+        <section className="admin-section">
+          <span className="section-eyebrow">Transit</span>
+          <h2>BART lines</h2>
+          <p className="muted">
+            {cfg.transitLines.length === 0
+              ? 'Showing every live departure until you select specific lines below.'
+              : 'Only the checked lines below show on the dashboard.'}
+          </p>
+
+          {lineOptions === null ? (
+            <p className="muted small">Couldn&rsquo;t load live BART lines right now. Try again later.</p>
+          ) : (
+            <form action={updateTransitLines} className="transit-form">
+              <div className="transit-cols">
+                <div className="transit-col">
+                  <span className="section-eyebrow">Northbound</span>
+                  {northLines.length === 0 ? (
+                    <p className="muted small">No northbound trains right now.</p>
+                  ) : (
+                    <ul className="line-list">
+                      {northLines.map((l) => (
+                        <li key={l.id} className="line-item">
+                          <label>
+                            <input
+                              type="checkbox"
+                              name="lines"
+                              value={l.id}
+                              defaultChecked={cfg.transitLines.includes(l.id)}
+                            />
+                            <span className="line-dot" style={{ background: l.hexColor }} />
+                            <span className="line-name">{l.destination}</span>
+                            <span className="line-tag">{titleCase(l.line)}</span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <div className="transit-col">
+                  <span className="section-eyebrow">Southbound</span>
+                  {southLines.length === 0 ? (
+                    <p className="muted small">No southbound trains right now.</p>
+                  ) : (
+                    <ul className="line-list">
+                      {southLines.map((l) => (
+                        <li key={l.id} className="line-item">
+                          <label>
+                            <input
+                              type="checkbox"
+                              name="lines"
+                              value={l.id}
+                              defaultChecked={cfg.transitLines.includes(l.id)}
+                            />
+                            <span className="line-dot" style={{ background: l.hexColor }} />
+                            <span className="line-name">{l.destination}</span>
+                            <span className="line-tag">{titleCase(l.line)}</span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </div>
+
+              <button type="submit" className="btn primary">Save</button>
+            </form>
+          )}
+        </section>
+      )}
     </div>
   );
 }
