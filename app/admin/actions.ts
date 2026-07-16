@@ -46,3 +46,14 @@ export async function updateTransitLines(formData: FormData): Promise<void> {
   revalidatePath('/');
   revalidatePath('/admin');
 }
+
+export async function updateWeatherZip(formData: FormData): Promise<void> {
+  const weatherZip = String(formData.get('zip') ?? '').trim();
+  if (weatherZip && !/^\d{5}$/.test(weatherZip)) return;
+
+  const cfg = await readConfig();
+  if (weatherZip === cfg.weatherZip) return;
+  await writeConfig({ ...cfg, weatherZip });
+  revalidatePath('/');
+  revalidatePath('/admin');
+}

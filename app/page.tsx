@@ -1,12 +1,17 @@
 import { fetchEvents } from '@/app/lib/calendar';
 import { readConfig, matchCategory } from '@/app/lib/config';
+import { fetchWeather } from '@/app/lib/weather';
 import CalendarApp from '@/app/components/CalendarApp';
 import type { EventData } from '@/app/lib/types';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Page() {
-  const [{ main, celebrations }, cfg] = await Promise.all([fetchEvents(), readConfig()]);
+  const cfg = await readConfig();
+  const [{ main, celebrations }, weather] = await Promise.all([
+    fetchEvents(),
+    cfg.weatherZip ? fetchWeather(cfg.weatherZip) : Promise.resolve(null),
+  ]);
 
   const todayMs = Date.now();
 
@@ -37,6 +42,8 @@ export default async function Page() {
       events={mainEvents}
       celebrations={celebrationEvents}
       todayMs={todayMs}
+      weather={weather}
+      weatherZip={cfg.weatherZip}
     />
   );
 }

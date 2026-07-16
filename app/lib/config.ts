@@ -12,6 +12,7 @@ export type AppConfig = {
   categories: Category[];
   transitStation: string; // BART station abbreviation (e.g. "12TH"); empty hides the panel
   transitLines: string[]; // BART bartLineId() values to show; empty shows everything
+  weatherZip: string; // 5-digit US zip code; empty hides the panel
 };
 
 const CONFIG_PATH = path.join(process.cwd(), 'data', 'config.json');
@@ -20,6 +21,7 @@ const DEFAULT_CONFIG: AppConfig = {
   categories: [],
   transitStation: '',
   transitLines: [],
+  weatherZip: '94612',
 };
 
 export async function readConfig(): Promise<AppConfig> {
@@ -30,6 +32,7 @@ export async function readConfig(): Promise<AppConfig> {
       categories: Array.isArray(parsed.categories) ? parsed.categories : [],
       transitStation: typeof parsed.transitStation === 'string' ? parsed.transitStation : '',
       transitLines: Array.isArray(parsed.transitLines) ? parsed.transitLines : [],
+      weatherZip: typeof parsed.weatherZip === 'string' ? parsed.weatherZip : DEFAULT_CONFIG.weatherZip,
     };
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === 'ENOENT') return DEFAULT_CONFIG;

@@ -145,7 +145,7 @@ export default function TransitPanel() {
   const departures = data?.configured ? data : null;
 
   return (
-    <div className="pane transit-pane flex flex-col border-r border-[var(--line)] bg-[var(--bg-sunk)] p-4.5 [grid-area:transit] max-[860px]:border-0 max-[860px]:p-3.5">
+    <div className="pane transit-pane flex flex-1 min-h-0 flex-col border-r border-[var(--line)] bg-[var(--bg-sunk)] p-4.5 max-[860px]:border-0 max-[860px]:p-3.5">
       <div className="mb-3 flex items-baseline gap-2">
         <h2 className="text-[19px] font-semibold tracking-tight max-[860px]:text-xl">BART</h2>
         {departures && (

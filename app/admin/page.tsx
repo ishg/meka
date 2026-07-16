@@ -3,8 +3,9 @@ import { ArrowLeftIcon, TrashIcon, PlusIcon } from '@heroicons/react/24/outline'
 import { readConfig } from '@/app/lib/config';
 import { PALETTE, colorsForHue } from '@/app/lib/colors';
 import { fetchBartStations, fetchBartLineOptions, type BartStation, type BartLineOption } from '@/app/lib/bart';
+import { geocodeZip } from '@/app/lib/geocode';
 import ThemeToggle from '@/app/components/ThemeToggle';
-import { addCategory, deleteCategory, updateTransitStation, updateTransitLines } from './actions';
+import { addCategory, deleteCategory, updateTransitStation, updateTransitLines, updateWeatherZip } from './actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +22,8 @@ export default async function AdminPage() {
   const lineOptions = cfg.transitStation
     ? await fetchBartLineOptions(cfg.transitStation).catch(() => null as BartLineOption[] | null)
     : null;
+
+  const weatherLocation = cfg.weatherZip ? await geocodeZip(cfg.weatherZip) : null;
 
   const northLines = lineOptions?.filter((l) => l.direction === 'North') ?? [];
   const southLines = lineOptions?.filter((l) => l.direction === 'South') ?? [];
@@ -99,6 +102,36 @@ export default async function AdminPage() {
             <PlusIcon className="ico" /> Add
           </button>
         </form>
+      </section>
+
+      <section className="admin-section">
+        <span className="section-eyebrow">Weather</span>
+        <h2>Location</h2>
+        <p className="muted">
+          A 5-digit US zip code. The dashboard shows nothing until one is set.
+        </p>
+
+        <form action={updateWeatherZip} className="row">
+          <input
+            type="text"
+            name="zip"
+            placeholder="e.g. 94612"
+            defaultValue={cfg.weatherZip}
+            pattern="\d{5}"
+            inputMode="numeric"
+            maxLength={5}
+            className="input"
+          />
+          <button type="submit" className="btn primary">Save</button>
+        </form>
+
+        {cfg.weatherZip && (
+          <p className="muted small">
+            {weatherLocation
+              ? `Showing weather for ${weatherLocation.placeName}`
+              : `Couldn’t find zip code ${cfg.weatherZip}`}
+          </p>
+        )}
       </section>
 
       <section className="admin-section">

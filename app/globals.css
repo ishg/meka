@@ -61,12 +61,20 @@ body {
 .app {
   display: grid;
   grid-template-columns: 240px 2fr 1.2fr;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto 1fr;
   grid-template-areas:
     "topbar topbar topbar"
-    "weather cal celebs"
-    "transit cal celebs";
+    "sidebar cal celebs";
   height: 100%;
+}
+
+/* Weather and BART share this column: weather takes its natural height,
+   BART grows to fill whatever's left down to the bottom of the column. */
+.sidebar-col {
+  grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
 /* TopBar, WeatherPanel and TransitPanel are styled with Tailwind utility
@@ -695,6 +703,16 @@ body {
     display: flex;
     flex-direction: column;
     height: 100dvh;
+  }
+
+  /* Only one tab is visible at a time on mobile. The weather/transit
+     wrapper should only claim flex space when one of its own children is
+     the active tab — otherwise it'd compete with cal-pane/right-pane for
+     space while empty. */
+  .app[data-mobile-tab='weather'] .sidebar-col,
+  .app[data-mobile-tab='transit'] .sidebar-col {
+    flex: 1;
+    min-height: 0;
   }
 
   .mobile-tabs {
