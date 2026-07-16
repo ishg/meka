@@ -1,25 +1,27 @@
 'use client';
 
 import { useMemo, useState, useEffect } from 'react';
-import Link from 'next/link';
 import {
   Squares2X2Icon,
   QueueListIcon,
   ListBulletIcon,
-  Cog6ToothIcon,
   CalendarDaysIcon,
   GiftIcon,
+  CloudIcon,
+  TruckIcon,
 } from '@heroicons/react/24/outline';
 import TwoWeekView from './TwoWeekView';
 import ScrollView from './ScrollView';
 import ScheduleView from './ScheduleView';
 import CelebrationsPanel from './CelebrationsPanel';
+import WeatherPanel from './WeatherPanel';
+import TransitPanel from './TransitPanel';
+import TopBar from './TopBar';
 import type { EventData, ParsedEvent } from '@/app/lib/types';
-import { weekdayLong, monthName } from '@/app/lib/dateHelpers';
 import { readStoredTheme, applyTheme } from '@/app/lib/theme';
 
 type View = 'grid' | 'scroll' | 'agenda';
-type MobileTab = 'cal' | 'celebs';
+type MobileTab = 'cal' | 'celebs' | 'weather' | 'transit';
 
 type Props = {
   events: EventData[];
@@ -63,33 +65,24 @@ export default function CalendarApp({ events, celebrations, todayMs }: Props) {
     [celebrations]
   );
 
-  const weekday = weekdayLong(today);
-  const dateRest = `${monthName(today)} ${today.getDate()}, ${today.getFullYear()}`;
-
   return (
     <div className="app" data-mobile-tab={mobileTab}>
+      <TopBar />
+      <WeatherPanel />
+      <TransitPanel />
+
       <div className="pane cal-pane">
         <div className="hd">
-          <div className="hd-l">
-            <h1>
-              {weekday}, <span className="hd-date">{dateRest}</span>
-            </h1>
-          </div>
-          <div className="hd-r">
-            <div className="seg">
-              <button data-active={view === 'grid' ? 'true' : 'false'} onClick={() => setView('grid')}>
-                <Squares2X2Icon className="ico" /> <span className="seg-label">2 weeks</span>
-              </button>
-              <button data-active={view === 'scroll' ? 'true' : 'false'} onClick={() => setView('scroll')}>
-                <QueueListIcon className="ico" /> <span className="seg-label">Timeline</span>
-              </button>
-              <button data-active={view === 'agenda' ? 'true' : 'false'} onClick={() => setView('agenda')}>
-                <ListBulletIcon className="ico" /> <span className="seg-label">Agenda</span>
-              </button>
-            </div>
-            <Link href="/admin" className="admin-link" title="Settings">
-              <Cog6ToothIcon className="ico" />
-            </Link>
+          <div className="seg seg-compact">
+            <button data-active={view === 'grid' ? 'true' : 'false'} onClick={() => setView('grid')}>
+              <Squares2X2Icon className="ico" /> <span className="seg-label">2 weeks</span>
+            </button>
+            <button data-active={view === 'scroll' ? 'true' : 'false'} onClick={() => setView('scroll')}>
+              <QueueListIcon className="ico" /> <span className="seg-label">Timeline</span>
+            </button>
+            <button data-active={view === 'agenda' ? 'true' : 'false'} onClick={() => setView('agenda')}>
+              <ListBulletIcon className="ico" /> <span className="seg-label">Agenda</span>
+            </button>
           </div>
         </div>
 
@@ -106,6 +99,12 @@ export default function CalendarApp({ events, celebrations, todayMs }: Props) {
         </button>
         <button className="tab" data-active={mobileTab === 'celebs' ? 'true' : 'false'} onClick={() => setMobileTab('celebs')} aria-label="Coming up">
           <GiftIcon className="ico" />
+        </button>
+        <button className="tab" data-active={mobileTab === 'weather' ? 'true' : 'false'} onClick={() => setMobileTab('weather')} aria-label="Weather">
+          <CloudIcon className="ico" />
+        </button>
+        <button className="tab" data-active={mobileTab === 'transit' ? 'true' : 'false'} onClick={() => setMobileTab('transit')} aria-label="Transit">
+          <TruckIcon className="ico" />
         </button>
       </div>
     </div>

@@ -86,7 +86,7 @@ export default function TwoWeekView({ events, today, dark }: Props) {
         })}
       </div>
 
-      <div className="grid">
+      <div className="cal-grid">
         {weekStarts.map((weekStart, wIdx) => {
           const { bars, laneCount } = layoutSpans(spans, weekStart, 7);
           const stripRoom = laneCount > 0 ? laneCount * 28 + 8 : 0;
