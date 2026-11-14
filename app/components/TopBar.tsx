@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { Cog6ToothIcon } from '@heroicons/react/24/outline';
+import { Cog6ToothIcon, MapIcon } from '@heroicons/react/24/outline';
 import { weekdayLong, monthName } from '@/app/lib/dateHelpers';
 
 function fmtClock(d: Date): string {
@@ -31,9 +31,14 @@ export default function TopBar() {
       <span className="mono text-3xl font-bold tracking-tight max-[860px]:text-xl">
         {now ? fmtClock(now) : '--:-- --'}
       </span>
-      <Link href="/admin" className="admin-link justify-self-end" title="Settings">
-        <Cog6ToothIcon className="ico" />
-      </Link>
+      <div className="flex items-center gap-2 justify-self-end">
+        <Link href="/map" className="admin-link" title="BART map screensaver">
+          <MapIcon className="ico" />
+        </Link>
+        <Link href="/admin" className="admin-link" title="Settings">
+          <Cog6ToothIcon className="ico" />
+        </Link>
+      </div>
     </div>
   );
 }

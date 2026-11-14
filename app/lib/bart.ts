@@ -1,6 +1,8 @@
 // BART real-time estimates (ETD) API — https://api.bart.gov/docs/etd/etd.aspx
 // Uses BART's public demo key by default; set BART_API_KEY to use your own.
 
+import { SEQ, ST, type MetroLine } from '@/app/lib/metroData';
+
 export type Direction = 'North' | 'South';
 
 export type BartStation = {
@@ -156,4 +158,66 @@ export async function fetchBartDepartures(station: string, selectedLineIds?: str
     north: north.slice(0, MAX_PER_DIRECTION),
     south: south.slice(0, MAX_PER_DIRECTION),
   };
+}
+
+// A train between two adjacent stops on a MetroLine, derived from the ETD feed.
+// BART has no vehicle positions, so a train that is `m` minutes from station S
+// (closer than one segment's travel time) is placed on the segment prev → S.
+export type BartTrain = {
+  line: MetroLine;
+  from: string;
+  to: string;
+  arrive: number; // epoch ms the train reaches `to`
+  seg: number;    // ms it takes to travel from → to
+};
+
+export async function fetchBartTrains(): Promise<BartTrain[]> {
+  const url = `https://api.bart.gov/api/etd.aspx?cmd=etd&orig=ALL&key=${apiKey()}&json=y`;
+  const res = await fetch(url, { cache: 'no-store' });
+  if (!res.ok) throw new Error(`BART API responded ${res.status}`);
+  const data = await res.json();
+  const stations: { abbr?: string; etd?: (RawEtd & { abbreviation?: string })[] }[] =
+    Array.isArray(data?.root?.station) ? data.root.station : [];
+
+  const now = Date.now();
+  const found: (BartTrain & { pos: number; m: number; group: string })[] = [];
+
+  for (const stn of stations) {
+    const to = String(stn.abbr ?? '');
+    for (const etd of stn.etd ?? []) {
+      const dest = String(etd.abbreviation ?? '');
+      for (const est of etd.estimate ?? []) {
+        const color = String(est.color ?? '').toUpperCase();
+        const line = (color === 'GREY' ? 'OAK' : color) as MetroLine;
+        const seq = SEQ[line];
+        const i = seq?.indexOf(to) ?? -1;
+        const d = seq?.indexOf(dest) ?? -1;
+        if (i < 0 || d < 0 || d === i) continue;
+        const from = seq[i + (d > i ? -1 : 1)];
+        if (!from) continue; // train is leaving its origin terminus
+
+        const raw = String(est.minutes ?? '');
+        const m = raw.toLowerCase() === 'leaving' ? 0 : Number(raw);
+        const [fx, fy] = ST[from];
+        const [tx, ty] = ST[to];
+        const segMin = Math.min(6, Math.max(1.5, Math.hypot(tx - fx, ty - fy) * 0.7));
+        if (!Number.isFinite(m) || m >= segMin) continue;
+        // pos: fractional index along the line; group: one line + travel direction.
+        const sign = d > i ? 1 : -1;
+        found.push({
+          line, from, to, m, arrive: now + m * 60000, seg: segMin * 60000,
+          pos: i - sign * (m / segMin), group: `${line}${sign}`,
+        });
+      }
+    }
+  }
+
+  // The same physical train shows up in neighbouring stations' estimates (and
+  // as "Leaving"); keep only the nearest-in-time one within ~1/3 of a station.
+  found.sort((a, b) => a.m - b.m);
+  const kept: typeof found = [];
+  for (const t of found) {
+    if (!kept.some((k) => k.group === t.group && Math.abs(k.pos - t.pos) < 0.35)) kept.push(t);
+  }
+  return kept.map(({ line, from, to, arrive, seg }) => ({ line, from, to, arrive, seg }));
 }
